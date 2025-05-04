@@ -1,5 +1,7 @@
-import { Box } from '@mui/material';
+import { Box, Typography, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
+import { ExpandMore } from '@mui/icons-material';
+import { useState } from 'react';
 
 const COLORS = ['#4caf50', '#f44336', '#9e9e9e'];
 
@@ -27,14 +29,26 @@ export default function InsightsBox({ data }) {
 
   const failed = withData - passed;
 
+  const poorLcpUrls = data.filter(d => d.hasData && d.lcp > passThresholds.lcp);
+  const poorClsUrls = data.filter(d => d.hasData && d.cls > passThresholds.cls);
+  const poorInpUrls = data.filter(d => d.hasData && d.inp > passThresholds.inp);
+
   const chartData = [
     { name: 'Passed', value: passed },
     { name: 'Failed', value: failed },
     { name: 'No Data', value: withoutData }
   ];
 
+  // Accordion state management
+  const [expanded, setExpanded] = useState(false);
+
+  const handleAccordionChange = (panel) => (_, isExpanded) => {
+    setExpanded(isExpanded ? panel : false);
+  };
+
   return (
     <Box sx={{ mt: 4 }}>
+      {/* Performance Pie Chart */}
       <PieChart width={400} height={300}>
         <Pie
           data={chartData}
@@ -53,6 +67,60 @@ export default function InsightsBox({ data }) {
         <Tooltip />
         <Legend verticalAlign="bottom" height={36} />
       </PieChart>
+
+      {/* Performance Summary */}
+      <Typography variant="h6" sx={{ mt: 2 }}>Performance Summary:</Typography>
+      <Typography>Avg LCP: {passed > 0 ? (data.reduce((acc, curr) => acc + (curr.lcp || 0), 0) / passed).toFixed(2) : 'N/A'} ms</Typography>
+      <Typography>Avg CLS: {passed > 0 ? (data.reduce((acc, curr) => acc + (curr.cls || 0), 0) / passed).toFixed(2) : 'N/A'}</Typography>
+      <Typography>Avg INP: {passed > 0 ? (data.reduce((acc, curr) => acc + (curr.inp || 0), 0) / passed).toFixed(2) : 'N/A'} ms</Typography>
+
+      {/* Accordion for LCP */}
+      <Accordion expanded={expanded === 'panel1'} onChange={handleAccordionChange('panel1')} sx={{ mt: 2 }}>
+        <AccordionSummary expandIcon={<ExpandMore />}>
+          <Typography>LCP Issues</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          {poorLcpUrls.length > 0 ? (
+            poorLcpUrls.map((url) => (
+              <Typography key={url.url}>{url.url} - LCP: {url.lcp} ms</Typography>
+            ))
+          ) : (
+            <Typography>No URLs with poor LCP found. All URLs are performing well!</Typography>
+          )}
+        </AccordionDetails>
+      </Accordion>
+
+      {/* Accordion for CLS */}
+      <Accordion expanded={expanded === 'panel2'} onChange={handleAccordionChange('panel2')} sx={{ mt: 2 }}>
+        <AccordionSummary expandIcon={<ExpandMore />}>
+          <Typography>CLS Issues</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          {poorClsUrls.length > 0 ? (
+            poorClsUrls.map((url) => (
+              <Typography key={url.url}>{url.url} - CLS: {url.cls}</Typography>
+            ))
+          ) : (
+            <Typography>No URLs with poor CLS found. All URLs are performing well!</Typography>
+          )}
+        </AccordionDetails>
+      </Accordion>
+
+      {/* Accordion for INP */}
+      <Accordion expanded={expanded === 'panel3'} onChange={handleAccordionChange('panel3')} sx={{ mt: 2 }}>
+        <AccordionSummary expandIcon={<ExpandMore />}>
+          <Typography>INP Issues</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          {poorInpUrls.length > 0 ? (
+            poorInpUrls.map((url) => (
+              <Typography key={url.url}>{url.url} - INP: {url.inp} ms</Typography>
+            ))
+          ) : (
+            <Typography>No URLs with poor INP found. All URLs are performing well!</Typography>
+          )}
+        </AccordionDetails>
+      </Accordion>
     </Box>
   );
 }

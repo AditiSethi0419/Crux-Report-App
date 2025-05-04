@@ -1,4 +1,3 @@
-// src/App.jsx
 import { Container, Typography, CircularProgress, Alert } from '@mui/material';
 import { useState } from 'react';
 import useCruxData from './hooks/useCruxData';
@@ -31,7 +30,6 @@ function App() {
         <>
           <Filters onFilter={filterData} onReset={resetFilters} />
           <ResultTable rows={data} />
-          {/* ✅ Moved this section just below the table */}
           {invalidUrls.length > 0 && (
             <Alert severity="warning" sx={{ mt: 2 }}>
               No CrUX data found for: {invalidUrls.map(d => d.url).join(', ')}

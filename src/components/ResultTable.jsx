@@ -1,5 +1,5 @@
 import { DataGrid } from '@mui/x-data-grid';
-import { Box, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 
 export default function ResultTable({ rows }) {
   const renderCell = (params) =>
@@ -20,6 +20,9 @@ export default function ResultTable({ rows }) {
     cls: 0.1,
   };
 
+  // Keep all rows regardless of whether they have data or not
+  const validRows = rows;
+
   const getRowClassName = (params) => {
     const { lcp, fcp, cls, inp } = params.row;
     if (
@@ -33,23 +36,11 @@ export default function ResultTable({ rows }) {
     return '';
   };
 
-  const validRows = rows.filter((r) => r.hasData);
-
-  const avg = (key) =>
-    validRows.length
-      ? (validRows.reduce((acc, r) => acc + (r[key] || 0), 0) / validRows.length).toFixed(2)
-      : 'N/A';
-
-  const sum = (key) =>
-    validRows.length
-      ? validRows.reduce((acc, r) => acc + (r[key] || 0), 0).toFixed(2)
-      : 'N/A';
-
   return (
     <>
       <Box sx={{ height: 400, width: '100%', marginTop: 2 }}>
         <DataGrid
-          rows={rows}
+          rows={validRows}  
           columns={columns}
           disableRowSelectionOnClick
           getRowClassName={getRowClassName}
@@ -62,11 +53,6 @@ export default function ResultTable({ rows }) {
             },
           }}
         />
-      </Box>
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="h6">Summary:</Typography>
-        <Typography>Avg LCP: {avg('lcp')} ms | Sum LCP: {sum('lcp')} ms</Typography>
-        <Typography>Avg FCP: {avg('fcp')} ms | Sum FCP: {sum('fcp')} ms</Typography>
       </Box>
     </>
   );
