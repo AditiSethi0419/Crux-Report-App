@@ -11,11 +11,10 @@ export default function useCruxData() {
     setLoading(true);
     const responses = await fetchMultiple(urls);
     
-    const formatted = responses.map(({ origin, data }) => {
+    const formatted = responses.map(({ origin, data, error }) => {
       const metrics = data?.record?.metrics || {};
       const get = (name) => metrics[name]?.percentiles?.p75 ?? null;
-        console.log(data);
-      
+    
       return {
         id: origin,
         url: origin,
@@ -23,8 +22,10 @@ export default function useCruxData() {
         lcp: get("largest_contentful_paint"),
         cls: get("cumulative_layout_shift"),
         inp: get("interaction_to_next_paint"),
+        hasData: !!Object.keys(metrics).length && !error,
       };
     });
+    
 
     setData(formatted);
     setFiltered(formatted);
