@@ -5,7 +5,7 @@ import MetricAccordion from './MetricAccordion';
 
 const COLORS = ['#4caf50', '#f44336', '#9e9e9e'];
 
-// Helper function to safely calculate average
+
 function getAverage(data, key, unit = '') {
   const numericValues = data
     .filter(d => d.hasData)
