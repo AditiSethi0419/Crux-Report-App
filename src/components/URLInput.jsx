@@ -1,4 +1,3 @@
-// src/components/URLInput.jsx
 import { TextField, Button } from '@mui/material';
 
 export default function URLInput({ urls, setUrls, onSearch }) {

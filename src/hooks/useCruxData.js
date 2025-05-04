@@ -1,4 +1,3 @@
-// src/hooks/useCruxData.js
 import { useState } from 'react';
 import { fetchMultiple } from '../utils/cruxApi';
 

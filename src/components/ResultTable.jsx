@@ -20,7 +20,6 @@ export default function ResultTable({ rows }) {
     cls: 0.1,
   };
 
-  // Keep all rows regardless of whether they have data or not
   const validRows = rows;
 
   const getRowClassName = (params) => {

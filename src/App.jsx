@@ -4,7 +4,7 @@ import useCruxData from './hooks/useCruxData';
 import URLInput from './components/URLInput';
 import Filters from './components/Filters';
 import ResultTable from './components/ResultTable';
-import InsightsBox from './components/InsightsBox'; // ✅ Added import for InsightsBox
+import InsightsBox from './components/InsightsBox';
 
 function App() {
   const [urls, setUrls] = useState('');
@@ -21,8 +21,8 @@ function App() {
   const invalidUrls = data.filter((d) => !d.hasData);
 
   return (
-    <Container sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>Chrome UX Report Viewer</Typography>
+    <Container sx={{ border: '2px solid #ccc',margin: '20px auto' }}>
+      <Typography variant="h4"align="center" sx={{ margin: '5px auto' }}>Chrome UX Report Viewer</Typography>
       <URLInput urls={urls} setUrls={setUrls} onSearch={handleSearch} />
       {loading ? (
         <CircularProgress sx={{ mt: 4 }} />
@@ -35,7 +35,7 @@ function App() {
               No CrUX data found for: {invalidUrls.map(d => d.url).join(', ')}
             </Alert>
           )}
-          <InsightsBox data={data} /> {/* ✅ Added InsightsBox component */}
+          <InsightsBox data={data} /> 
         </>
       )}
     </Container>

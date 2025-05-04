@@ -1,9 +1,22 @@
-import { Box, Typography, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { PieChart, Pie, Cell, Tooltip, Legend } from 'recharts';
-import { ExpandMore } from '@mui/icons-material';
 import { useState } from 'react';
+import MetricAccordion from './MetricAccordion';
 
 const COLORS = ['#4caf50', '#f44336', '#9e9e9e'];
+
+// Helper function to safely calculate average
+function getAverage(data, key, unit = '') {
+  const numericValues = data
+    .filter(d => d.hasData)
+    .map(d => parseFloat(d[key]))
+    .filter(val => !isNaN(val));
+
+  if (numericValues.length === 0) return 'N/A';
+
+  const average = numericValues.reduce((sum, val) => sum + val, 0) / numericValues.length;
+  return `${average.toFixed(2)}${unit}`;
+}
 
 export default function InsightsBox({ data }) {
   const total = data.length;
@@ -20,18 +33,18 @@ export default function InsightsBox({ data }) {
   const passed = data.filter(d => {
     return (
       d.hasData &&
-      d.lcp <= passThresholds.lcp &&
-      d.fcp <= passThresholds.fcp &&
-      d.inp <= passThresholds.inp &&
-      d.cls <= passThresholds.cls
+      parseFloat(d.lcp) <= passThresholds.lcp &&
+      parseFloat(d.fcp) <= passThresholds.fcp &&
+      parseFloat(d.inp) <= passThresholds.inp &&
+      parseFloat(d.cls) <= passThresholds.cls
     );
   }).length;
 
   const failed = withData - passed;
 
-  const poorLcpUrls = data.filter(d => d.hasData && d.lcp > passThresholds.lcp);
-  const poorClsUrls = data.filter(d => d.hasData && d.cls > passThresholds.cls);
-  const poorInpUrls = data.filter(d => d.hasData && d.inp > passThresholds.inp);
+  const poorLcpUrls = data.filter(d => d.hasData && parseFloat(d.lcp) > passThresholds.lcp);
+  const poorClsUrls = data.filter(d => d.hasData && parseFloat(d.cls) > passThresholds.cls);
+  const poorInpUrls = data.filter(d => d.hasData && parseFloat(d.inp) > passThresholds.inp);
 
   const chartData = [
     { name: 'Passed', value: passed },
@@ -39,7 +52,6 @@ export default function InsightsBox({ data }) {
     { name: 'No Data', value: withoutData }
   ];
 
-  // Accordion state management
   const [expanded, setExpanded] = useState(false);
 
   const handleAccordionChange = (panel) => (_, isExpanded) => {
@@ -48,79 +60,67 @@ export default function InsightsBox({ data }) {
 
   return (
     <Box sx={{ mt: 4 }}>
-      {/* Performance Pie Chart */}
-      <PieChart width={400} height={300}>
-        <Pie
-          data={chartData}
-          cx="50%"
-          cy="50%"
-          labelLine={false}
-          outerRadius={100}
-          fill="#8884d8"
-          dataKey="value"
-          label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-        >
-          {chartData.map((entry, index) => (
-            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-          ))}
-        </Pie>
-        <Tooltip />
-        <Legend verticalAlign="bottom" height={36} />
-      </PieChart>
+    
+      <Box sx={{ display: 'flex',justifyContent: 'space-around', flexWrap: 'wrap' }}>
+      <Box sx={{ display: 'flex',flexDirection:'column' , justifyContent:'center'}}>
+          <Typography variant="h6"  sx={{ mt: 2  }}>Performance Summary:</Typography>
+          <Typography>Avg LCP: {getAverage(data, 'lcp', ' ms')}</Typography>
+          <Typography>Avg CLS: {getAverage(data, 'cls')}</Typography>
+          <Typography>Avg INP: {getAverage(data, 'inp', ' ms')}</Typography>
+        </Box>
+        <Box>
+          <PieChart width={400} height={300}>
+            <Pie
+              data={chartData}
+              cx="50%"
+              cy="50%"
+              labelLine={false}
+              outerRadius={100}
+              fill="#8884d8"
+              dataKey="value"
+              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+            >
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip />
+            <Legend verticalAlign="bottom" height={36} />
+          </PieChart>
+        </Box>
 
-      {/* Performance Summary */}
-      <Typography variant="h6" sx={{ mt: 2 }}>Performance Summary:</Typography>
-      <Typography>Avg LCP: {passed > 0 ? (data.reduce((acc, curr) => acc + (curr.lcp || 0), 0) / passed).toFixed(2) : 'N/A'} ms</Typography>
-      <Typography>Avg CLS: {passed > 0 ? (data.reduce((acc, curr) => acc + (curr.cls || 0), 0) / passed).toFixed(2) : 'N/A'}</Typography>
-      <Typography>Avg INP: {passed > 0 ? (data.reduce((acc, curr) => acc + (curr.inp || 0), 0) / passed).toFixed(2) : 'N/A'} ms</Typography>
+    
+      </Box>
 
-      {/* Accordion for LCP */}
-      <Accordion expanded={expanded === 'panel1'} onChange={handleAccordionChange('panel1')} sx={{ mt: 2 }}>
-        <AccordionSummary expandIcon={<ExpandMore />}>
-          <Typography>LCP Issues</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          {poorLcpUrls.length > 0 ? (
-            poorLcpUrls.map((url) => (
-              <Typography key={url.url}>{url.url} - LCP: {url.lcp} ms</Typography>
-            ))
-          ) : (
-            <Typography>No URLs with poor LCP found. All URLs are performing well!</Typography>
-          )}
-        </AccordionDetails>
-      </Accordion>
+      {/* Accordion for issues */}
+      <MetricAccordion
+        expanded={expanded}
+        handleChange={handleAccordionChange}
+        panelId="panel1"
+        title="LCP"
+        issues={poorLcpUrls}
+        metricKey="lcp"
+        unit=" ms"
+      />
 
-      {/* Accordion for CLS */}
-      <Accordion expanded={expanded === 'panel2'} onChange={handleAccordionChange('panel2')} sx={{ mt: 2 }}>
-        <AccordionSummary expandIcon={<ExpandMore />}>
-          <Typography>CLS Issues</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          {poorClsUrls.length > 0 ? (
-            poorClsUrls.map((url) => (
-              <Typography key={url.url}>{url.url} - CLS: {url.cls}</Typography>
-            ))
-          ) : (
-            <Typography>No URLs with poor CLS found. All URLs are performing well!</Typography>
-          )}
-        </AccordionDetails>
-      </Accordion>
+      <MetricAccordion
+        expanded={expanded}
+        handleChange={handleAccordionChange}
+        panelId="panel2"
+        title="CLS"
+        issues={poorClsUrls}
+        metricKey="cls"
+      />
 
-      {/* Accordion for INP */}
-      <Accordion expanded={expanded === 'panel3'} onChange={handleAccordionChange('panel3')} sx={{ mt: 2 }}>
-        <AccordionSummary expandIcon={<ExpandMore />}>
-          <Typography>INP Issues</Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          {poorInpUrls.length > 0 ? (
-            poorInpUrls.map((url) => (
-              <Typography key={url.url}>{url.url} - INP: {url.inp} ms</Typography>
-            ))
-          ) : (
-            <Typography>No URLs with poor INP found. All URLs are performing well!</Typography>
-          )}
-        </AccordionDetails>
-      </Accordion>
+      <MetricAccordion
+        expanded={expanded}
+        handleChange={handleAccordionChange}
+        panelId="panel3"
+        title="INP"
+        issues={poorInpUrls}
+        metricKey="inp"
+        unit=" ms"
+      />
     </Box>
   );
 }
